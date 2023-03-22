@@ -1,51 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
-http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
     <http:listener-config name="accounts-api-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
     <apikit:config name="accounts-api-config" api="resource::78ca250d-cf28-4e97-9bbf-4f38b4e3aeb9:diy-accounts-api:1.0.0:raml:zip:accounts-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <db:config name="Database_Config" doc:name="Database Config" doc:id="849bb00f-ab48-497a-b7c4-9f8dab1f3eb1" >
-		<db:generic-connection url="jdbc:mysql://mudb.learn.mulesoft.com:3306/training?user=mule&amp;password=mule" driverClassName="com.mysql.cj.jdbc.Driver" />
-	</db:config>
-	<flow name="get-accounts" doc:id="41d4a50f-6f64-49ce-b5cb-8e7e28a54345">
-		<db:select doc:name="flights_customers" doc:id="83242ae4-7f02-46b0-b307-5e1ab35a8258" config-ref="Database_Config">
-			<db:sql><![CDATA[SELECT * FROM flights_customers]]></db:sql>
-		</db:select>
-		<ee:transform doc:name="Transform Message" doc:id="0e5374a8-e8d3-437e-99a0-b330299a8af5">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload map ( payload01 , indexOfPayload01 ) -> {
-	id: payload01.accountID as Number default 0,
-	name: payload01.name default "",
-	street: payload01.street default "",
-	city: payload01.city default "",
-	state: payload01.state default "",
-	postal: payload01.postal default "",
-	country: payload01.country default "",
-	accountstype: payload01.accountType default "",
-	creationdate: payload01.creationDate as Date default "",
-	miles: payload01.miles as Number default 0
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-	</flow>
-	<flow name="post-accounts">
-        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  message: "Accounts created"
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-    </flow>
-	<flow name="accounts-api-main">
+    <flow name="accounts-api-main">
         <http:listener config-ref="accounts-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
@@ -57,7 +16,7 @@ output application/json
         </http:listener>
         <apikit:router config-ref="accounts-api-config" />
     </flow>
-	<flow name="accounts-api-console">
+    <flow name="accounts-api-console">
         <http:listener config-ref="accounts-api-httpListenerConfig" path="/console/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[vars.outboundHeaders default {}]</http:headers>
@@ -69,7 +28,19 @@ output application/json
         </http:listener>
         <apikit:console config-ref="accounts-api-config" />
     </flow>
-    <flow name="get-api-config">
+    <flow name="get:\accounts:accounts-api-config">
 		<flow-ref doc:name="get-accounts" doc:id="abcbafa7-1f3c-4b78-8a7b-a797c79b6d5a" name="get-accounts"/>
+    </flow>
+    <flow name="post:\accounts:application\json:accounts-api-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Accounts created"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
     </flow>
 </mule>
